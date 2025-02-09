@@ -1,6 +1,8 @@
-use clap::Parser;
+use clap::{Command, CommandFactory, Parser};
 use std::io::stdin;
-use std::{thread, time};
+use std::{io, thread, time};
+use clap_complete::{generate, Generator};
+use clap_complete::Shell::Bash;
 use serde::Serialize;
 use serde_yaml;
 
@@ -64,6 +66,13 @@ struct Cli {
     wait: bool,
 
     #[arg(
+        short = 'g',
+        long,
+        help = "Generate bash completion file"
+    )]
+    generate_bash_completion: bool,
+
+    #[arg(
         short = 'v',
         long,
         help = "Verbose mode"
@@ -73,8 +82,19 @@ struct Cli {
 
 const BASE_SIZE_OF_BLOCK: usize = 256 * 1024; // the number of i32's that takes 1MB
 
+fn print_completions<G: Generator>(gen: G, cmd: &mut Command) {
+    generate(gen, cmd, cmd.get_name().to_string(), &mut io::stdout());
+}
+
 fn main() {
     let args = Cli::parse();
+
+    if args.generate_bash_completion {
+        let mut cmd = Cli::command();
+        print_completions(Bash, &mut cmd);
+        return;
+    }
+
     println!("Welcome to memory game!");
 
     if args.verbose {
